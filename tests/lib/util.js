@@ -94,8 +94,10 @@ function authenticate(options, callback){
 
   request.post({
     url: serverURL + '/mocklogin/' + options.username,
-    jar: options.jar
+    jar: options.jar,
+    timeout: 100
   }, function(err, res, body) {
+      console.log(err);
       expect(err).not.to.exist;
       expect(res.statusCode).to.equal(200);
       callback(null, options);

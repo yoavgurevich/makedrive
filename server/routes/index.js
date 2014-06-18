@@ -209,4 +209,5 @@ console.log('Trying to start sync session ' + sync.id);
   });
 
   app.get( "/healthcheck", routes.healthcheck );
+
 };

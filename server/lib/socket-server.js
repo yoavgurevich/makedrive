@@ -11,7 +11,6 @@ module.exports = function( server ) {
   });
 
   wss.on('connection', function(ws) {
-   ws.on('message', function(data, flags) {
      // Capture the connectionId
      // Remove event listener for "this"
      var match = /{"syncId"\s*:\s*"(\w{8}(-\w{4}){3}-\w{12}?)"}/.exec(data),
@@ -39,5 +38,4 @@ module.exports = function( server ) {
        }
      });
    });
-  });
 };

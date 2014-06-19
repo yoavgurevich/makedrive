@@ -5,13 +5,15 @@ if ( process.env.NEW_RELIC_ENABLED ) {
 var express = require( "express" ),
     helmet = require( "helmet" ),
     Path = require( "path" ),
-    http = require( "http" );
+    http = require( "http" ),
+    WebSocketServer = require('ws').Server;
 
 // Expose internals
 var env = require( "./lib/environment" ),
     middleware = require( "./middleware" ),
     routes = require( "./routes" ),
     WebmakerAuth = require('webmaker-auth'),
+    jwt = require('jsonwebtoken'),
     socketServer = require( "./lib/socket-server" );
 
 var app = express();
@@ -45,11 +47,23 @@ function corsOptions ( req, res ) {
   res.header( "Access-Control-Allow-Origin", "*" );
 }
 
+var wss = new WebSocketServer({ server: app });
+
 // Declare routes
 routes( app, webmakerAuth );
 
 app.post('/verify', webmakerAuth.handlers.verify);
-app.post('/authenticate', webmakerAuth.handlers.authenticate);
+app.post('/authenticate', webmakerAuth.handlers.authenticate, function(req, res){
+      wss.on('authenticate', function (data) {
+        jwt.verify(data.token, options, function (err, decoded) {
+          if(err){
+            console.log(err);
+            return wss.close(err);
+          }
+          else wss.send('Session Integrity Verified!');
+        });
+      });
+    });
 app.post('/create', webmakerAuth.handlers.create);
 app.post('/logout', webmakerAuth.handlers.logout);
 app.post('/check-username', webmakerAuth.handlers.exists);

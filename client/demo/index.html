@@ -33,18 +33,18 @@
 
         // Attach event listeners!
         auth.on('login', function(user, debuggingInfo) {
-          var socket = $.websocket("ws://127.0.0.1:9090/", {
+          var socket = new WebSocket("ws://127.0.0.1:9090/" + (token ? ('?token=' + token) : '', {
+            'forceNew': true
+          }), {
             events: {
               onopen: function(e){ console.log('Websocket connection successfully opened!') },
+              onauthenticate: function(e) { console.log('- authenticated'); },
               onmessage: function(e) { $('#content').append(e.data + '<br>') },
               onerror: function(e){ console.log(e); }
             }
           });
-          $('#login').click(function(){
             socket.send('message', this.value);
-            this.value = 'YO BAEEEEEE!!!';
-          })
-          console.log('login', user, debuggingInfo);
+            this.value = 'messages should start appearing';
         });
         auth.on('logout', function() {
           console.log('logout');

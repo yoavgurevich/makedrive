@@ -7,6 +7,7 @@ var express = require( "express" ),
     WebmakerAuth = require( "webmaker-auth" ),
     Path = require( "path" ),
     http = require( "http" ),
+    jwt = require( "jsonwebtoken" ),
     messina;
 
 // Expose internals
@@ -22,9 +23,12 @@ var app = express(),
       secretKey: env.get( "SESSION_SECRET" ),
       forceSSL: env.get( "FORCE_SSL" ),
       domain: env.get( "COOKIE_DOMAIN" )
-    }),
+    }, app),
     logger,
     port;
+
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ server: app, port: 6200 });
 
 // Logging middleware
 if ( env.get( "ENABLE_GELF_LOGS" ) ) {
@@ -56,13 +60,26 @@ app.use( middleware.fourOhFourHandler );
 function corsOptions ( req, res ) {
   res.header( "Access-Control-Allow-Origin", "*" );
 }
+wss.on('connection', function(ws) {
+    ws.on('message', function(message) {
+        console.log('received: %s', message);
+    });
+    ws.send('something');
+});
+app.post('/verify', webmakerAuth.handlers.verify, function(req, res){
+  console.log('in verify post route');
+});
+app.post('/authenticate', webmakerAuth.handlers.authenticate);
+app.post('/create', webmakerAuth.handlers.create);
+app.post('/logout', webmakerAuth.handlers.logout);
+app.post('/check-username', webmakerAuth.handlers.exists);
 
 // Declare routes
 routes( app );
 
-port = env.get( "PORT", 9090 );
+port = env.get( "PORT", 8080 );
 var server = http.createServer( app );
-server.listen(9090);
+server.listen(8080);
 
 socketServer( server );
 

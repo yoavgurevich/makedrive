@@ -8,6 +8,7 @@ var express = require( "express" ),
     Path = require( "path" ),
     http = require( "http" ),
     jwt = require( "jsonwebtoken" ),
+    wsAuth = require ( "wsauth" ),
     messina;
 
 // Expose internals
@@ -28,7 +29,7 @@ var app = express(),
     port;
 
 var WebSocketServer = require('ws').Server;
-var wss = new WebSocketServer({ server: app, port: 6200 });
+var wss = new WebSocketServer({ server: app, port: 8181 });
 
 // Logging middleware
 if ( env.get( "ENABLE_GELF_LOGS" ) ) {
@@ -57,19 +58,32 @@ app.use( app.router );
 app.use( middleware.errorHandler );
 app.use( middleware.fourOhFourHandler );
 
+//wss.broadcast = function(data) {
+//    for(var i in this.clients)
+//        this.clients[i].send(data);
+//};
+
 function corsOptions ( req, res ) {
   res.header( "Access-Control-Allow-Origin", "*" );
 }
 wss.on('connection', function(ws) {
+    var token = jwt.sign(persona, jwt_secret, { expiresInMinutes: 60*5 });
+
+    ws.on('error', function(e){
+      console.log(e);
+    });
     ws.on('message', function(message) {
         console.log('received: %s', message);
     });
-    ws.send('something');
+    ws.send({token: token});
 });
 app.post('/verify', webmakerAuth.handlers.verify, function(req, res){
   console.log('in verify post route');
 });
 app.post('/authenticate', webmakerAuth.handlers.authenticate);
+app.post('/gettoken', function(req, res){
+
+});
 app.post('/create', webmakerAuth.handlers.create);
 app.post('/logout', webmakerAuth.handlers.logout);
 app.post('/check-username', webmakerAuth.handlers.exists);
@@ -77,9 +91,9 @@ app.post('/check-username', webmakerAuth.handlers.exists);
 // Declare routes
 routes( app );
 
-port = env.get( "PORT", 8080 );
+port = env.get( "PORT", 9090 );
 var server = http.createServer( app );
-server.listen(8080);
+server.listen(9090);
 
 socketServer( server );
 

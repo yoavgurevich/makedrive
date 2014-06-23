@@ -7,7 +7,6 @@ var express = require( "express" ),
     WebmakerAuth = require( "webmaker-auth" ),
     Path = require( "path" ),
     http = require( "http" ),
-    jwt = require( "jsonwebtoken" ),
     wsAuth = require ( "wsauth" ),
     messina;
 
@@ -67,22 +66,30 @@ function corsOptions ( req, res ) {
   res.header( "Access-Control-Allow-Origin", "*" );
 }
 wss.on('connection', function(ws) {
-    var token = jwt.sign(persona, jwt_secret, { expiresInMinutes: 60*5 });
-
+  var success;
     ws.on('error', function(e){
       console.log(e);
     });
     ws.on('message', function(message) {
-        console.log('received: %s', message);
+        if(message.token){
+          success = wsAuth.getToken(message.token);
+          if(!success){
+            ws.close('YOU ARE UNAUTHORIZED!');
+          }
+        }
+        else ws.close('NO VALID TOKEN EXISTS!');
     });
-    ws.send({token: token});
 });
 app.post('/verify', webmakerAuth.handlers.verify, function(req, res){
   console.log('in verify post route');
 });
 app.post('/authenticate', webmakerAuth.handlers.authenticate);
-app.post('/gettoken', function(req, res){
-
+app.get('/gettoken', function(req, res){
+  if(req.session.user){ //This reference might be wrong
+    var token = wsAuth.addUser(null, req.session.user);
+    return res.json(200, token);
+  }
+  res.json(401);
 });
 app.post('/create', webmakerAuth.handlers.create);
 app.post('/logout', webmakerAuth.handlers.logout);
@@ -97,4 +104,7 @@ server.listen(9090);
 
 socketServer( server );
 
-module.exports = app;
+module.exports = {
+  app: app,
+  WebmakerAuth: WebmakerAuth
+};

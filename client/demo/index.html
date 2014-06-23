@@ -12,10 +12,11 @@
       <script src="https://login.persona.org/include.js"></script>
       <script src="/vendors/webmaker-auth-client/dist/webmaker-auth-client.min.js"></script>
       <script src="/vendors/rc-socket.js/dist/rc-socket.js"></script>
+      <script src="/vendors/superagent/superagent.js"></script>
       <script>
         var loginEl = document.querySelector('#login');
         var logoutEl = document.querySelector('#logout');
-        var RcSocket;
+        var token;
 
         var auth = new WebmakerAuthClient({
           host: '',
@@ -33,15 +34,17 @@
         });
 
         // Attach event listeners!
-        auth.on('login', function(user, debuggingInfo) {
-          console.log('in auth.on');
+        auth.on('login', function(user, debuggingInfo){
+          window.superagent.get('/gettoken', function(req, res){
+            if(res.status != 200){
+              return console.log(debuggingInfo);
+            }
+            token = res.body.token;
+          });
           var socket = new WebSocket("ws://127.0.0.1:8181/");
-          socket.onopen = function (event) {
-            socket.send("Here's some text that the server is urgently awaiting!", event.data);
-          };
           socket.onopen = function(e){
-            console.log('Websocket connection successfully opened!', e.data);
-            socket.send('message');
+            console.log('Websocket connection successfully opened!');
+            socket.send(JSON.stringify({token: token});
           };
           socket.onmessage = function(e){
             if(JSON.parse(e.data) == 'authenticate'){

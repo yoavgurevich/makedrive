@@ -7,7 +7,7 @@ var express = require( "express" ),
     WebmakerAuth = require( "webmaker-auth" ),
     Path = require( "path" ),
     http = require( "http" ),
-    wsAuth = require ( "wsauth" ),
+    wsAuth = require ( "./lib/wsauth" ),
     messina;
 
 // Expose internals
@@ -85,8 +85,8 @@ app.post('/verify', webmakerAuth.handlers.verify, function(req, res){
 });
 app.post('/authenticate', webmakerAuth.handlers.authenticate);
 app.get('/gettoken', function(req, res){
-  if(req.session.user){ //This reference might be wrong
-    var token = wsAuth.addUser(null, req.session.user);
+  if(req.session && req.session.user){ //This reference might be wrong
+    var token = wsAuth.addUser(null, req.session.user.username);
     return res.json(200, token);
   }
   res.json(401);

@@ -44,7 +44,7 @@
           var socket = new WebSocket("ws://127.0.0.1:8181/");
           socket.onopen = function(e){
             console.log('Websocket connection successfully opened!');
-            socket.send(JSON.stringify({token: token});
+            socket.send(JSON.stringify({token: token}));
           };
           socket.onmessage = function(e){
             if(JSON.parse(e.data) == 'authenticate'){
@@ -52,7 +52,9 @@
             }
             $('#content').append(e.data + '<br>');
           };
-          socket.onerror = function(e){ console.log(e); }
+          socket.onerror = function(e){
+            { console.log(e); };
+          };
         });
         auth.on('logout', function() {
           console.log('logout');

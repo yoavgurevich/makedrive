@@ -1,14 +1,24 @@
 var uuid = require( "node-uuid" );
 
-var authTable = [];
+var authTable = {};
 
 function addUser(err, user){
   // When webmake-auth signs in, add user id data to authTable
   if(err){
     return console.log(err);
   }
-  user.tokens.push(uuid.v4());
-  authTable.push(user);
+  if(authTable[user]){
+    authTable[user].tokens.push(uuid.v4());
+  }
+  else{
+    authTable[user] = {username: user, tokens: [uuid.v4()]};
+  }
+
+  // Error check
+  // Does this user already exist in authTable?
+    // If so, add to the token list
+    // If not, c
+
 };
 
 function getToken(token){

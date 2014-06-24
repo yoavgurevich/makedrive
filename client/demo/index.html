@@ -36,25 +36,39 @@
         // Attach event listeners!
         auth.on('login', function(user, debuggingInfo){
           window.superagent.get('/gettoken', function(req, res){
+            console.log('in xhr and here\'s the body:', res);
             if(res.status != 200){
               return console.log(debuggingInfo);
             }
-            token = res.body.token;
+            token = JSON.parse(res.text);
           });
           var socket = new WebSocket("ws://127.0.0.1:8181/");
           socket.onopen = function(e){
             console.log('Websocket connection successfully opened!');
-            socket.send(JSON.stringify({token: token}));
+            console.log('what\'s in the token object?', JSON.stringify({token: token.tokens[0]}));
+            socket.send(JSON.stringify({token: token.tokens[0]}));
           };
           socket.onmessage = function(e){
-            if(JSON.parse(e.data) == 'authenticate'){
-                console.log('- authenticated');
+            console.log('outside the try');
+            try{
+              console.log('e.data typof', typeof e.data);
+              var data = e.data;
+              console.log('data:', data);
+              if(data == 'authenticated!'){
+                  console.log('- authenticated');
+              }
+              $('#content').append(data + '<br>');
             }
-            $('#content').append(e.data + '<br>');
+            catch(e){
+              console.log(e);
+            }
           };
           socket.onerror = function(e){
-            { console.log(e); };
+            console.log(e);
           };
+          socket.onclose = function(e) {
+            console.log(e);
+          }
         });
         auth.on('logout', function() {
           console.log('logout');

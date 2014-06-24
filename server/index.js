@@ -71,11 +71,13 @@ wss.on('connection', function(ws) {
       console.log(e);
     });
     ws.on('message', function(message) {
+      message = JSON.parse(message);
         if(message.token){
           success = wsAuth.getToken(message.token);
           if(!success){
-            ws.close('YOU ARE UNAUTHORIZED!');
+            return ws.close('YOU ARE UNAUTHORIZED!');
           }
+          ws.send('authenticated!');
         }
         else ws.close('NO VALID TOKEN EXISTS!');
     });
@@ -85,9 +87,9 @@ app.post('/verify', webmakerAuth.handlers.verify, function(req, res){
 });
 app.post('/authenticate', webmakerAuth.handlers.authenticate);
 app.get('/gettoken', function(req, res){
-  if(req.session && req.session.user){ //This reference might be wrong
+  if(req.session && req.session.user){
     var token = wsAuth.addUser(null, req.session.user.username);
-    return res.json(200, token);
+    return res.send(200, token);
   }
   res.json(401);
 });

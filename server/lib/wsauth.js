@@ -8,25 +8,24 @@ function addUser(err, user){
     return console.log(err);
   }
   if(authTable[user]){
+    console.log(authTable[user]);
     authTable[user].tokens.push(uuid.v4());
+    return authTable[user];
   }
   else{
-    authTable[user] = {username: user, tokens: [uuid.v4()]};
+    return authTable[user] = {username: user, tokens: [uuid.v4()]};
   }
-
-  // Error check
-  // Does this user already exist in authTable?
-    // If so, add to the token list
-    // If not, c
 
 };
 
 function getToken(token){
   // Expose data for comparison validation of websockets connection integrity
-  for(var i = 0; i<authTable.length; i++){
-    for(var j=0; j<authTable[i].tokens.length; j++){
-      if(authTable[i].tokens[j] == token){
-        authTable[i].tokens[j].pop();
+  var u;
+  for (var user in authTable) {
+    u=authTable[user];
+   for(var i=0; i<u.tokens.length; i++){
+      if(u.tokens[i] == token){
+        delete u.tokens[i];
         return true;
       }
     }

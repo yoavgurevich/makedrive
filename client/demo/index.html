@@ -36,7 +36,6 @@
         // Attach event listeners!
         auth.on('login', function(user, debuggingInfo){
           window.superagent.get('/gettoken', function(req, res){
-            console.log('in xhr and here\'s the body:', res);
             if(res.status != 200){
               return console.log(debuggingInfo);
             }
@@ -49,7 +48,6 @@
             socket.send(JSON.stringify({token: token.tokens[0]}));
           };
           socket.onmessage = function(e){
-            console.log('outside the try');
             try{
               console.log('e.data typof', typeof e.data);
               var data = e.data;

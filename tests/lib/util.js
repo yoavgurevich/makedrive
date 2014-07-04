@@ -329,7 +329,7 @@ var syncSteps = {
       customAssertions(message, cb);
     });
 
-    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.SRCLIST);
+    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM);
     socketPackage.socket.send(resolveFromJSON(srcListMessage));
   },
   checksums: function(socketPackage, data, customAssertions, cb) {

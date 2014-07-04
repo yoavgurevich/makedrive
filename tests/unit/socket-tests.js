@@ -46,16 +46,15 @@ describe('[Downstream Syncing with Websockets]', function(){
         });
       });
     });
-    it('should send an ACK when a syncId and the websocket auth token is sent from the client', function(done) {
+    it(', after calcultating the received SourceList, should send a REQUEST for CHKSUMs when a syncId and the websocket auth token is sent from the client', function(done) {
       util.authenticatedConnection({ done: done }, function( err, result ) {
         expect(err).not.to.exist;
         var socketData = {
           token: result.token
         };
-
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM)));
             util.cleanupSockets(result.done, socketPackage);
           }
         });
@@ -70,8 +69,6 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
-
             util.authenticatedConnection(function(err, result2) {
               expect(err).not.to.exist;
               socketData = {
@@ -81,7 +78,6 @@ describe('[Downstream Syncing with Websockets]', function(){
 
               var socketPackage2 = util.openSocket(socketData, {
                 onMessage: function(message) {
-                  expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
                   util.cleanupSockets(function() {
                     result.done();
                     result2.done();
@@ -112,7 +108,7 @@ describe('[Downstream Syncing with Websockets]', function(){
               util.cleanupSockets(result.done, socketPackage);
             });
 
-            var noContentMessage = new SyncMessage(SyncMessage.RESPONSE, SyncMessage.DIFF);
+            var noContentMessage = new SyncMessage(SyncMessage.RESPONSE, SyncMessage.DIFFS);
             noContentMessage.content = null;
 
             socketPackage.socket.send(JSON.stringify(noContentMessage));
@@ -130,7 +126,7 @@ describe('[Downstream Syncing with Websockets]', function(){
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             // First, confirm server acknowledgment
-            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+//            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
 
             // Listen for SyncMessage error
             socketPackage.socket.on("message", function(message) {
@@ -158,7 +154,7 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+//            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
 
             var username = util.username();
 
@@ -188,7 +184,7 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+//            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
 
             var username = util.username();
 
@@ -217,7 +213,7 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+//            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
 
             util.prepareSync('srcList', username, socketPackage, function(syncData, fb) {
               util.syncSteps.checksums(socketPackage, syncData, function(msg, cb) {
@@ -246,7 +242,7 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+//            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
 
             util.prepareSync(username, socketPackage, function(syncData, fs){
               util.syncSteps.checksums(socketPackage, syncData, function(msg, cb) {

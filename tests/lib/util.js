@@ -315,7 +315,7 @@ var syncSteps = {
       if (!customAssertions) {
         expect(message).to.exist;
         expect(message.type).to.equal(SyncMessage.RESPONSE);
-        expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.SOURCE_LIST);
+        expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.SRCLIST);
         expect(message.content).to.exist;
         expect(message.content.srcList).to.exist;
         expect(message.content.path).to.exist;
@@ -329,7 +329,7 @@ var syncSteps = {
       customAssertions(message, cb);
     });
 
-    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.SOURCE_LIST);
+    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.SRCLIST);
     socketPackage.socket.send(resolveFromJSON(srcListMessage));
   },
   checksums: function(socketPackage, data, customAssertions, cb) {
@@ -350,7 +350,7 @@ var syncSteps = {
 
         expect(message).to.exist;
         expect(message.type).to.equal(SyncMessage.RESPONSE);
-        expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.ACK);
+        expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.ERROR);
         expect(message.content).to.exist;
         expect(message.content.path).to.exist;
 
@@ -360,7 +360,7 @@ var syncSteps = {
       customAssertions(message, cb);
     });
 
-    var checksumResponse = new SyncMessage(SyncMessage.RESPONSE, SyncMessage.CHECKSUM);
+    var checksumResponse = new SyncMessage(SyncMessage.RESPONSE, SyncMessage.CHKSUM);
     socketPackage.socket.send(resolveFromJSON(checksumResponse));
   },
   diffs: function(socketPackage, data, fs, customAssertions, cb) {
@@ -381,7 +381,7 @@ var syncSteps = {
         message = resolveToJSON(message);
 
         expect(message.type).to.equal(SyncMessage.RESPONSE);
-        expect(message.name).to.equal(SyncMessage.DIFF);
+        expect(message.name).to.equal(SyncMessage.DIFFS);
         expect(message.content).to.exist;
         expect(message.content.diffs).to.exist;
         expect(message.content.path).to.exist;
@@ -396,7 +396,7 @@ var syncSteps = {
     rsync.checksums(fs, path, srcList, rsyncOptions, function( err, checksums ) {
       expect(err).to.be.null;
 
-      var diffRequest = new SyncMessage(SyncMessage.REQUEST, SyncMessage.DIFF);
+      var diffRequest = new SyncMessage(SyncMessage.REQUEST, SyncMessage.DIFFS);
       diffRequest.content = {
         checksums: checksums
       };
@@ -418,7 +418,7 @@ var syncSteps = {
 
       expect(message).to.exist;
       expect(message.type).to.equal(SyncMessage.RESPONSE);
-      expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.ACK);
+      expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.ERROR);
 
       cb();
     });

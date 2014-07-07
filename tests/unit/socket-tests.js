@@ -210,7 +210,7 @@ describe('[Downstream Syncing with Websockets]', function(){
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.DIFFS)));
-            util.prepareDownstreamSync('diffs', username, socketPackage, function(syncData, fs) {
+            util.prepareDownstreamSync('checksums', username, socketPackage, function(syncData, fs) {
               util.downstreamSyncSteps.diffs(socketPackage, syncData, fs, function(msg, cb) {
                 msg = util.resolveToJSON(msg);
 
@@ -263,9 +263,9 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.PATCH)));
-            util.prepareDownstreamSync(username, socketPackage, function(syncData, fs) {
-              util.upstreamSyncSteps.sync(socketPackage, syncData, fs, function(msg, cb) {
+            util.prepareDownstreamSync('diffs', username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.patch(socketPackage, syncData, fs, function(msg, cb) {
+
                 msg = util.resolveToJSON(msg);
 
                 expect(msg.content).to.exist;

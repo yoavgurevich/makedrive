@@ -52,6 +52,7 @@ describe('[Downstream Syncing with Websockets]', function(){
         var socketData = {
           token: result.token
         };
+
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
@@ -69,6 +70,7 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
+            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
             util.authenticatedConnection(function(err, result2) {
               expect(err).not.to.exist;
               socketData = {
@@ -100,8 +102,7 @@ describe('[Downstream Syncing with Websockets]', function(){
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             // First, confirm server acknowledgment
-//            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
-
+            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
             // Listen for SyncMessage error
             socketPackage.socket.on("message", function(message) {
               expect(message).to.equal(JSON.stringify(Sync.socket.errors.EINVAL));
@@ -118,7 +119,7 @@ describe('[Downstream Syncing with Websockets]', function(){
       });
     });
   });
-  describe('SOURCE_LIST requests', function() {
+  describe('SRCLIST requests', function() {
     it('should still return a REQUEST for CHKSUM with the sourceList after calculating a sourceList', function(done) {
       util.authenticatedConnection({ done: done }, function( err, result ) {
         expect(err).not.to.exist;
@@ -131,15 +132,15 @@ describe('[Downstream Syncing with Websockets]', function(){
             expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM)));
             var username = util.username();
 
-            util.prepareSync(username, socketPackage, function(syncData, fs) {
-              util.syncSteps.srcList(socketPackage, function(data1) {
+            util.prepareDownstreamSync(username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.srcList(socketPackage, function(data1) {
                 expect(data1.srcList).to.exist;
                 expect(data1.path).to.exist;
                 util.cleanupSockets(result.done, socketPackage);
               });
             });
           }
-        });                                    
+        });
       });
     });
     it('should still return a SyncMessage with the sourceList and path for a sync when requested a second time', function(done) {
@@ -151,15 +152,14 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            //TODO: implement check for new server RESPONSE from updated design
-            var username = util.username();
+            expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));             var username = util.username();
 
-            util.prepareSync(username, socketPackage, function(syncData, fs) {
-              util.syncSteps.srcList(socketPackage, function(data1) {
+            util.prepareDownstreamSync(username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.srcList(socketPackage, function(data1) {
                 expect(data1.srcList).to.exist;
                 expect(data1.path).to.exist;
 
-                util.syncSteps.srcList(socketPackage, function(data2) {
+                util.downstreamSyncSteps.srcList(socketPackage, function(data2) {
                   expect(data1.srcList).to.exist;
                   expect(data1.path).to.exist;
 
@@ -180,12 +180,12 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-//            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
 
             var username = util.username();
 
-            util.prepareSync("checksums", username, socketPackage, function(syncData, fs) {
-              util.syncSteps.srcList(socketPackage, function(msg, cb) {
+            util.prepareDownstreamSync("checksums", username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.srcList(socketPackage, function(msg, cb) {
                 expect(util.resolveFromJSON(msg)).to.equal(util.resolveFromJSON(Sync.socket.errors.ESTATE));
                 cb();
               }, function(data) {
@@ -197,7 +197,7 @@ describe('[Downstream Syncing with Websockets]', function(){
       });
     });
   });
-  describe('DIFF requests', function() {
+  describe('DIFFS responses', function() {
     it('should return an RESPONSE message with the diffs', function(done) {
       util.authenticatedConnection({ done: done }, function( err, result ) {
         expect(err).not.to.exist;
@@ -210,9 +210,8 @@ describe('[Downstream Syncing with Websockets]', function(){
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.DIFFS)));
-
-            util.prepareSync('checksums', username, socketPackage, function(syncData, fs) {
-              util.syncSteps.diffs(socketPackage, syncData, fs, function(msg, cb) {
+            util.prepareDownstreamSync('diffs', username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.diffs(socketPackage, syncData, fs, function(msg, cb) {
                 msg = util.resolveToJSON(msg);
 
                 expect(msg.content).to.exist;
@@ -237,10 +236,64 @@ describe('[Downstream Syncing with Websockets]', function(){
 
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
-            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.ACK)));
+            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
 
-            util.prepareSync('srcList', username, socketPackage, function(syncData, fs) {
-              util.syncSteps.diffs(socketPackage, syncData, fs, function(msg, cb){
+            util.prepareDownstreamSync('srcList', username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.diffs(socketPackage, syncData, fs, function(msg, cb){
+                expect(msg).to.equal(util.resolveFromJSON(Sync.socket.errors.ESTATE));
+                cb();
+              }, function(data) {
+                util.cleanupSockets(result.done, socketPackage);
+              });
+            });
+          }
+        });
+      });
+    });
+  });
+  describe('PATCH', function() {
+    it('should be available to initiate/cater to a new sync REQUEST after receiving a PATCH response from the client', function(done) {
+      util.authenticatedConnection({ done: done }, function( err, result ) {
+        expect(err).not.to.exist;
+
+        var username = util.username();
+        var socketData = {
+          token: result.token
+        };
+
+        var socketPackage = util.openSocket(socketData, {
+          onMessage: function(message) {
+            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.PATCH)));
+            util.prepareDownstreamSync(username, socketPackage, function(syncData, fs) {
+              util.upstreamSyncSteps.sync(socketPackage, syncData, fs, function(msg, cb) {
+                msg = util.resolveToJSON(msg);
+
+                expect(msg.content).to.exist;
+                expect(msg.content.sync).to.exist;
+                cb();
+              }, function(data) {
+                util.cleanupSockets(result.done, socketPackage);
+              });
+            });
+          }
+        });
+      });
+    });
+    it('should return an ESTATE SyncMessage when sent out of turn', function(done) {
+      util.authenticatedConnection({ done: done }, function( err, result ) {
+        expect(err).not.to.exist;
+
+        var username = util.username();
+        var socketData = {
+          token: result.token
+        };
+
+        var socketPackage = util.openSocket(socketData, {
+          onMessage: function(message) {
+            expect(message).to.equal(util.resolveFromJSON(new SyncMessage(SyncMessage.RESPONSE, SyncMessage.AUTHZ)));
+
+            util.prepareDownstreamSync('srcList', username, socketPackage, function(syncData, fs) {
+              util.downstreamSyncSteps.diffs(socketPackage, syncData, fs, function(msg, cb){
                 expect(msg).to.equal(util.resolveFromJSON(Sync.socket.errors.ESTATE));
                 cb();
               }, function(data) {

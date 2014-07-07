@@ -431,7 +431,7 @@ var upstreamSyncSteps = {
       customAssertions(message, cb);
     });
 
-    var srcListMessage = new SyncMessage(SyncMessage.RESPONSE, SyncMessage.SYNC);
+    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM);
     socketPackage.socket.send(resolveFromJSON(srcListMessage));
   }
 };
@@ -496,6 +496,5 @@ module.exports = {
   resolveFromJSON: resolveFromJSON,
   prepareDownstreamSync: prepareDownstreamSync,
   downstreamSyncSteps: downstreamSyncSteps,
-  upstreamSyncSteps: upstreamSyncSteps,
   getWebsocketToken: getWebsocketToken
 };

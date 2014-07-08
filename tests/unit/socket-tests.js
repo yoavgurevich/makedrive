@@ -127,6 +127,8 @@ describe('[Downstream Syncing with Websockets]', function(){
           token: result.token
         };
 
+
+
         var socketPackage = util.openSocket(socketData, {
           onMessage: function(message) {
             expect(message).to.equal(JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM)));
@@ -252,31 +254,26 @@ describe('[Downstream Syncing with Websockets]', function(){
     });
   });
   describe('PATCH', function() {
-    it('should be available to initiate/cater to a new sync REQUEST after receiving a PATCH response from the client', function(done) {
+    it('should make the server respond with a RESPONSE SYNC SyncMessage after ending a downstream sync, and initiating an upstream sync', function(done) {
       util.authenticatedConnection({ done: done }, function( err, result ) {
         expect(err).not.to.exist;
 
-        var username = util.username();
-        var socketData = {
-          token: result.token
-        };
+        util.prepareDownstreamSync("diffs", result.username, result.token, function(data, fs, socketPackage) {
+          util.downstreamSyncSteps.patch(socketPackage, syncData, fs, function(msg, cb) {
+            msg = util.resolveToJSON(msg);
+            var sendMsg = JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.SYNC));
+            util.sendSyncMessage(socketPackage, sendMsg, function(message){
+              message = util.resolveToJSON(message);
 
-        var socketPackage = util.openSocket(socketData, {
-          onMessage: function(message) {
-            util.prepareDownstreamSync('diffs', username, socketPackage, function(syncData, fs) {
-              util.downstreamSyncSteps.patch(socketPackage, syncData, fs, function(msg, cb) {
-                msg = util.resolveToJSON(msg);
-                var sendMsg = JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.SYNC));
-                util.sendMessage(socketPackage, sendMsg, function(message){
-                  expect(msg.content).to.exist;
-                  expect(msg.content.srcList).to.exist;
-                  cb();
-                });
-              }, function(data) {
-                util.cleanupSockets(result.done, socketPackage);
-              });
+              expect(message).to.exist;
+              expect(message.type).to.equal(SyncMessage.RESPONSE);
+              expect(message.name).to.equal(SyncMessage.SYNC);
+
+              cb();
             });
-          }
+          }, function(data) {
+            util.cleanupSockets(result.done, socketPackage);
+          });
         });
       });
     });

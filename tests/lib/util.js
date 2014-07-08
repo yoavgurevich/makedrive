@@ -296,6 +296,12 @@ function cleanupSockets(done) {
   done();
 }
 
+function sendSyncMessage(socketPackage, syncMessage, callback) {
+  var socket = socketPackage.socket;
+  socketPackage.setMessage(callback);
+  socketPackage.socket.send(resolveFromJSON(syncMessage));
+}
+
 /**
  * Sync Helpers
  */
@@ -436,7 +442,7 @@ var upstreamSyncSteps = {
   }
 };
 
-function prepareDownstreamSync(finalStep, username, socketPackage, cb){
+function prepareDownstreamSync(finalStep, username, token, cb){
   if (typeof cb !== "function") {
     cb = socketPackage;
     socketPackage = username;
@@ -456,27 +462,51 @@ function prepareDownstreamSync(finalStep, username, socketPackage, cb){
       name: username
     });
 
-    // Complete required sync steps
-    if (!finalStep) {
-      return cb(null, fs);
-    }
-    downstreamSyncSteps.srcList(socketPackage, function(data1) {
-      if (finalStep == "srcList") {
-        return cb(data1, fs);
-      }
-      downstreamSyncSteps.checksums(socketPackage, data1, function(data2) {
-        if (finalStep == "checksums") {
-          return cb(data2, fs);
+    var socketPackage = openSocket({
+      token: token
+    }, {
+      onMessage: function(message) {
+        message = resolveToJSON(message);
+
+        expect(message).to.exist;
+        expect(message.type).to.equal(SyncMessage.REQUEST);
+        expect(message.name).to.equal(SyncMessage.CHKSUM);
+        expect(message.content).to.exist;
+        expect(message.content.srcList).to.exist;
+        expect(message.content.path).to.exist;
+
+        var downstreamData = {
+          srcList: message.content.srcList,
+          path: message.content.path
+        };
+
+        // Complete required sync steps
+        if (!finalStep) {
+          return cb(downstreamData, fs, socketPackage);
         }
-        downstreamSyncSteps.diffs(socketPackage, data2, fs, function(data3) {
-          if (finalStep == "diffs") {
-            return cb(data3, fs);
+        downstreamSyncSteps.srcList(socketPackage, function(data1) {
+          // Ensure srcList and path are available
+          data1.srcList = downstreamData.srcList;
+          data1.path = downstreamData.path;
+
+          if (finalStep == "srcList") {
+            return cb(data1, fs, socketPackage);
           }
-          downstreamSyncSteps.patch(socketPackage, data3, fs, function(data4) {
-            cb(data4, fs);
+          downstreamSyncSteps.checksums(socketPackage, data1, function(data2) {
+            if (finalStep == "checksums") {
+              return cb(data2, fs, socketPackage);
+            }
+            downstreamSyncSteps.diffs(socketPackage, data2, fs, function(data3) {
+              if (finalStep == "diffs") {
+                return cb(data3, fs, socketPackage);
+              }
+              downstreamSyncSteps.patch(socketPackage, data3, fs, function(data4) {
+                cb(data4, fs, socketPackage);
+              });
+            });
           });
         });
-      });
+      }
     });
   });
 }

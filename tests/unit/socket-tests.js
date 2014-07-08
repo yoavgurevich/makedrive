@@ -265,12 +265,13 @@ describe('[Downstream Syncing with Websockets]', function(){
           onMessage: function(message) {
             util.prepareDownstreamSync('diffs', username, socketPackage, function(syncData, fs) {
               util.downstreamSyncSteps.patch(socketPackage, syncData, fs, function(msg, cb) {
-
                 msg = util.resolveToJSON(msg);
-
-                expect(msg.content).to.exist;
-                expect(msg.content.sync).to.exist;
-                cb();
+                var sendMsg = JSON.stringify(new SyncMessage(SyncMessage.REQUEST, SyncMessage.SYNC));
+                util.sendMessage(socketPackage, sendMsg, function(message){
+                  expect(msg.content).to.exist;
+                  expect(msg.content.srcList).to.exist;
+                  cb();
+                });
               }, function(data) {
                 util.cleanupSockets(result.done, socketPackage);
               });

@@ -306,38 +306,6 @@ function sendSyncMessage(socketPackage, syncMessage, callback) {
  * Sync Helpers
  */
 var downstreamSyncSteps = {
-  srcList: function(socketPackage, customAssertions, cb) {
-    if (!cb) {
-      cb = customAssertions;
-      customAssertions = null;
-    }
-
-    socketPackage.socket.removeListener("message", socketPackage.onMessage);
-    socketPackage.socket.once("message", function(message) {
-      // Reattach original listener
-      socketPackage.socket.once("message", socketPackage.onMessage);
-
-      message = resolveToJSON(message);
-      if (!customAssertions) {
-        expect(message).to.exist;
-        expect(message.type).to.equal(SyncMessage.RESPONSE);
-        expect(message.name, "[SyncMessage Type error. SyncMessage.content was: " + message.content + "]").to.equal(SyncMessage.SRCLIST);
-        expect(message.content).to.exist;
-        expect(message.content.srcList).to.exist;
-        expect(message.content.path).to.exist;
-
-        return cb({
-          srcList: message.content.srcList,
-          path: message.content.path
-        });
-      }
-
-      customAssertions(message, cb);
-    });
-
-    var srcListMessage = new SyncMessage(SyncMessage.REQUEST, SyncMessage.CHKSUM);
-    socketPackage.socket.send(resolveFromJSON(srcListMessage));
-  },
   diffs: function(socketPackage, data, fs, customAssertions, cb) {
     if (!cb) {
       cb = customAssertions;
@@ -484,26 +452,12 @@ function prepareDownstreamSync(finalStep, username, token, cb){
         if (!finalStep) {
           return cb(downstreamData, fs, socketPackage);
         }
-        downstreamSyncSteps.srcList(socketPackage, function(data1) {
-          // Ensure srcList and path are available
-          data1.srcList = downstreamData.srcList;
-          data1.path = downstreamData.path;
-
-          if (finalStep == "srcList") {
+        downstreamSyncSteps.diffs(socketPackage, downstreamData, fs, function(data1) {
+          if (finalStep == "diffs") {
             return cb(data1, fs, socketPackage);
           }
-          downstreamSyncSteps.checksums(socketPackage, data1, function(data2) {
-            if (finalStep == "checksums") {
-              return cb(data2, fs, socketPackage);
-            }
-            downstreamSyncSteps.diffs(socketPackage, data2, fs, function(data3) {
-              if (finalStep == "diffs") {
-                return cb(data3, fs, socketPackage);
-              }
-              downstreamSyncSteps.patch(socketPackage, data3, fs, function(data4) {
-                cb(data4, fs, socketPackage);
-              });
-            });
+          downstreamSyncSteps.patch(socketPackage, data1, fs, function(data2) {
+            cb(data2, fs, socketPackage);
           });
         });
       }

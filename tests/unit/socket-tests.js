@@ -180,10 +180,10 @@ describe('[Downstream Syncing with Websockets]', function(){
            checksums: "crap"
          };
          util.sendSyncMessage(socketPackage, diffRequest, function(msg) {
-           msg = util.resolveToJSON(msg);
+           msg = util.toSyncMessage(msg);
 
            expect(msg.type, "[Message type error: \"" + (msg.content && msg.content.error) +"\"]" ).to.equal(SyncMessage.ERROR);
-           expect(msg.name).to.equal(SyncMessage.RESPONSE);
+           expect(msg.name).to.equal(SyncMessage.DIFFS);
            expect(msg.content).to.exist;
            expect(msg.content.diffs).to.not.exist;
            util.cleanupSockets(result.done, socketPackage);

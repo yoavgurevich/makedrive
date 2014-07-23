@@ -155,6 +155,7 @@ describe('[Downstream Syncing with Websockets]', function(){
        expect(err).not.to.exist;
 
        util.prepareDownstreamSync(result.username, result.token, function(syncData, fs, socketPackage) {
+         console.log("Syncdata:\n\n\n\n\n\n", syncData, "Socketpackage: \n\n\n\n", socketPackage);
          util.downstreamSyncSteps.generateDiffs(socketPackage, syncData, fs, function(msg, cb) {
            msg = util.toSyncMessage(msg);
 
@@ -164,6 +165,27 @@ describe('[Downstream Syncing with Websockets]', function(){
            expect(msg.content.diffs).to.exist;
            cb();
          }, function(data) {
+           util.cleanupSockets(result.done, socketPackage);
+         });
+       });
+     });
+   });
+   it('should return an ERROR message with nonexistent diffs', function(done) {
+     util.authenticatedConnection({ done: done }, function( err, result ) {
+       expect(err).not.to.exist;
+
+       util.prepareDownstreamSync(result.username, result.token, function(syncData, fs, socketPackage) {
+         var diffRequest = SyncMessage.request.diffs;
+         diffRequest.content = {
+           checksums: "crap"
+         };
+         util.sendSyncMessage(socketPackage, diffRequest, function(msg) {
+           msg = util.resolveToJSON(msg);
+
+           expect(msg.type, "[Message type error: \"" + (msg.content && msg.content.error) +"\"]" ).to.equal(SyncMessage.ERROR);
+           expect(msg.name).to.equal(SyncMessage.RESPONSE);
+           expect(msg.content).to.exist;
+           expect(msg.content.diffs).to.not.exist;
            util.cleanupSockets(result.done, socketPackage);
          });
        });

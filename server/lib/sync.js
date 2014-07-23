@@ -259,7 +259,7 @@ Sync.prototype.canSync = function() {
 };
 
 // Handle a message sent by the client
-Sync.prototype.messageHandler = function(data) {
+Sync.prototype.messageHandler = function(data) { debugger;
   data = SyncMessage.parse(data);
 
   if(data.is.request) {

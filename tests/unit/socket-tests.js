@@ -155,7 +155,6 @@ describe('[Downstream Syncing with Websockets]', function(){
        expect(err).not.to.exist;
 
        util.prepareDownstreamSync(result.username, result.token, function(syncData, fs, socketPackage) {
-         console.log("Syncdata:\n\n\n\n\n\n", syncData, "Socketpackage: \n\n\n\n", socketPackage);
          util.downstreamSyncSteps.generateDiffs(socketPackage, syncData, fs, function(msg, cb) {
            msg = util.toSyncMessage(msg);
 
@@ -170,7 +169,7 @@ describe('[Downstream Syncing with Websockets]', function(){
        });
      });
    });
-   it('should return an ERROR message with nonexistent diffs', function(done) {
+   it('should return an ERROR type message named DIFFS when faulty checksums are sent', function(done) {
      util.authenticatedConnection({ done: done }, function( err, result ) {
        expect(err).not.to.exist;
 

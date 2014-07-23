@@ -190,6 +190,22 @@ describe('[Downstream Syncing with Websockets]', function(){
        });
      });
    });
+   it('should return an SyncMessage with error content when no checksums are sent', function(done) {
+     util.authenticatedConnection({ done: done }, function( err, result ) {
+       expect(err).not.to.exist;
+
+       util.prepareDownstreamSync(result.username, result.token, function(syncData, fs, socketPackage) {
+         var diffRequest = SyncMessage.request.diffs;
+         diffRequest.content = {};
+         util.sendSyncMessage(socketPackage, diffRequest, function(msg) {
+           msg = util.toSyncMessage(msg);
+
+           expect(msg).to.eql(SyncMessage.error.content);
+           util.cleanupSockets(result.done, socketPackage);
+         });
+       });
+     });
+   });
  });
 
  describe('Patch the client filesystem', function() {
